@@ -26,5 +26,6 @@ rubrics = await db_crud.get_rubrics_ids_for_post(db, post)
 return Post.model_validate_with_rubrics(post, rubrics)
 ```
 можно сделать лучше, через единый запрос. Это костыль.
+
 3) Минимальный графический интерфейс
 4) Настройки приложения в config.py - можно заменить, так же как и src/elastic/config.py

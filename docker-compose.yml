@@ -1,0 +1,73 @@
+
+services:
+  backend:
+    build:
+      context: .
+      network: host
+    container_name: apr_test_task_api
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    env_file:
+      - .elastic.env
+      - .db.env
+    networks:
+      - apr_test_task_network
+
+  db:
+    image: postgres:17
+    container_name: apr_test_task_postgres
+    restart: always
+    env_file:
+      - ./.db.env
+    ports:
+      - "5452:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - apr_test_task_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.3
+    container_name: apr_test_task_elasticsearch
+    env_file:
+      - .elastic.env
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.name=apr_test_task_cluster
+      - node.name=apr_test_task_node
+      - network.host=0.0.0.0
+    ports:
+      - "9201:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - apr_test_task_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 15s  # Elasticsearch требует больше времени для запуска
+
+volumes:
+  postgres_data:
+  elasticsearch-data:
+    driver: local
+
+networks:
+  apr_test_task_network:
+    driver: bridge

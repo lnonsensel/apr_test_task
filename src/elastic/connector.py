@@ -15,8 +15,3 @@ class ElasticConnector:
             auth = (user, password)
 
         self.client = AsyncElasticsearch(url, basic_auth=auth)
-
-    def check_connection(
-        self,
-    ):
-        pass
